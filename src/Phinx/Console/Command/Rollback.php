@@ -31,7 +31,6 @@ namespace Phinx\Console\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Phinx\Config\Config;
 
 class Rollback extends AbstractCommand
 {
@@ -83,9 +82,9 @@ EOT
         $this->bootstrap($input, $output);
 
         $environment = $input->getOption('environment');
-        $version     = $input->getOption('target');
-        $date        = $input->getOption('date');
-        $force       = !!$input->getOption('force');
+        $version = $input->getOption('target');
+        $date = $input->getOption('date');
+        $force = !!$input->getOption('force');
 
         $config = $this->getConfig();
 

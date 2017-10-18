@@ -30,8 +30,8 @@ namespace Phinx\Db\Adapter;
 
 use Phinx\Db\Table;
 use Phinx\Db\Table\Column;
-use Phinx\Db\Table\Index;
 use Phinx\Db\Table\ForeignKey;
+use Phinx\Db\Table\Index;
 
 class PostgresAdapter extends PdoAdapter implements AdapterInterface
 {
@@ -143,7 +143,7 @@ class PostgresAdapter extends PdoAdapter implements AdapterInterface
      */
     public function quoteColumnName($columnName)
     {
-        return '"'. $columnName . '"';
+        return '"' . $columnName . '"';
     }
 
     /**
@@ -211,24 +211,14 @@ class PostgresAdapter extends PdoAdapter implements AdapterInterface
         if (isset($options['primary_key'])) {
             $sql = rtrim($sql);
             $sql .= sprintf(' CONSTRAINT %s_pkey PRIMARY KEY (', $table->getName());
-            if (is_string($options['primary_key'])) {       // handle primary_key => 'id'
+            if (is_string($options['primary_key'])) { // handle primary_key => 'id'
                 $sql .= $this->quoteColumnName($options['primary_key']);
             } elseif (is_array($options['primary_key'])) { // handle primary_key => array('tag_id', 'resource_id')
-                // PHP 5.4 will allow access of $this, so we can call quoteColumnName() directly in the anonymous function,
-                // but for now just hard-code the adapter quotes
-                $sql .= implode(
-                    ',',
-                    array_map(
-                        function ($v) {
-                            return '"' . $v . '"';
-                        },
-                        $options['primary_key']
-                    )
-                );
+                $sql .= implode(',', array_map([$this, 'quoteColumnName'], $options['primary_key']));
             }
             $sql .= ')';
         } else {
-            $sql = substr(rtrim($sql), 0, -1);              // no primary keys
+            $sql = substr(rtrim($sql), 0, -1); // no primary keys
         }
 
         // set the foreign keys
@@ -765,16 +755,12 @@ class PostgresAdapter extends PdoAdapter implements AdapterInterface
             // with SRID 4326.
             case static::PHINX_TYPE_GEOMETRY:
                 return ['name' => 'geography', 'type' => 'geometry', 'srid' => 4326];
-                break;
             case static::PHINX_TYPE_POINT:
                 return ['name' => 'geography', 'type' => 'point', 'srid' => 4326];
-                break;
             case static::PHINX_TYPE_LINESTRING:
                 return ['name' => 'geography', 'type' => 'linestring', 'srid' => 4326];
-                break;
             case static::PHINX_TYPE_POLYGON:
                 return ['name' => 'geography', 'type' => 'polygon', 'srid' => 4326];
-                break;
             default:
                 if ($this->isArrayType($type)) {
                     return ['name' => $type];
@@ -825,7 +811,6 @@ class PostgresAdapter extends PdoAdapter implements AdapterInterface
                 return static::PHINX_TYPE_FLOAT;
             case 'bytea':
                 return static::PHINX_TYPE_BINARY;
-                break;
             case 'time':
             case 'timetz':
             case 'time with time zone':
@@ -919,8 +904,8 @@ class PostgresAdapter extends PdoAdapter implements AdapterInterface
             if (static::PHINX_TYPE_DECIMAL === $sqlType['name'] && ($column->getPrecision() || $column->getScale())) {
                 $buffer[] = sprintf(
                     '(%s, %s)',
-                    $column->getPrecision() ? $column->getPrecision() : $sqlType['precision'],
-                    $column->getScale() ? $column->getScale() : $sqlType['scale']
+                    $column->getPrecision() ?: $sqlType['precision'],
+                    $column->getScale() ?: $sqlType['scale']
                 );
             } elseif (in_array($sqlType['name'], ['geography'])) {
                 // geography type must be written with geometry type and srid, like this: geography(POLYGON,4326)
@@ -931,7 +916,7 @@ class PostgresAdapter extends PdoAdapter implements AdapterInterface
                 );
             } elseif (!in_array($sqlType['name'], ['integer', 'smallint', 'bigint'])) {
                 if ($column->getLimit() || isset($sqlType['limit'])) {
-                    $buffer[] = sprintf('(%s)', $column->getLimit() ? $column->getLimit() : $sqlType['limit']);
+                    $buffer[] = sprintf('(%s)', $column->getLimit() ?: $sqlType['limit']);
                 }
             }
 
@@ -1013,9 +998,7 @@ class PostgresAdapter extends PdoAdapter implements AdapterInterface
      */
     protected function getForeignKeySqlDefinition(ForeignKey $foreignKey, $tableName)
     {
-        $constraintName = $foreignKey->getConstraint()
-            ? $foreignKey->getConstraint()
-            : $tableName . '_' . implode('_', $foreignKey->getColumns());
+        $constraintName = $foreignKey->getConstraint() ?: $tableName . '_' . implode('_', $foreignKey->getColumns());
 
         $def = ' CONSTRAINT "' . $constraintName . '" FOREIGN KEY ("' . implode('", "', $foreignKey->getColumns()) . '")';
         $def .= " REFERENCES {$this->quoteTableName($foreignKey->getReferencedTable()->getName())} (\"" . implode('", "', $foreignKey->getReferencedColumns()) . '")';

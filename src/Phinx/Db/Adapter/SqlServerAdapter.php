@@ -30,8 +30,8 @@ namespace Phinx\Db\Adapter;
 
 use Phinx\Db\Table;
 use Phinx\Db\Table\Column;
-use Phinx\Db\Table\Index;
 use Phinx\Db\Table\ForeignKey;
+use Phinx\Db\Table\Index;
 
 /**
  * Phinx SqlServer Adapter.
@@ -247,17 +247,7 @@ class SqlServerAdapter extends PdoAdapter implements AdapterInterface
             if (is_string($options['primary_key'])) { // handle primary_key => 'id'
                 $pkSql .= $this->quoteColumnName($options['primary_key']);
             } elseif (is_array($options['primary_key'])) { // handle primary_key => array('tag_id', 'resource_id')
-                // PHP 5.4 will allow access of $this, so we can call quoteColumnName() directly in the anonymous function,
-                // but for now just hard-code the adapter quotes
-                $pkSql .= implode(
-                    ',',
-                    array_map(
-                        function ($v) {
-                            return '[' . $v . ']';
-                        },
-                        $options['primary_key']
-                    )
-                );
+                $pkSql .= implode(',', array_map([$this, 'quoteColumnName'], $options['primary_key']));
             }
             $pkSql .= ')';
             $sqlBuffer[] = $pkSql;
@@ -861,42 +851,30 @@ ORDER BY T.[name], I.[index_id];";
         switch ($type) {
             case static::PHINX_TYPE_STRING:
                 return ['name' => 'nvarchar', 'limit' => 255];
-                break;
             case static::PHINX_TYPE_CHAR:
                 return ['name' => 'nchar', 'limit' => 255];
-                break;
             case static::PHINX_TYPE_TEXT:
                 return ['name' => 'ntext'];
-                break;
             case static::PHINX_TYPE_INTEGER:
                 return ['name' => 'int'];
-                break;
             case static::PHINX_TYPE_BIG_INTEGER:
                 return ['name' => 'bigint'];
-                break;
             case static::PHINX_TYPE_FLOAT:
                 return ['name' => 'float'];
-                break;
             case static::PHINX_TYPE_DECIMAL:
                 return ['name' => 'decimal'];
-                break;
             case static::PHINX_TYPE_DATETIME:
             case static::PHINX_TYPE_TIMESTAMP:
                 return ['name' => 'datetime'];
-                break;
             case static::PHINX_TYPE_TIME:
                 return ['name' => 'time'];
-                break;
             case static::PHINX_TYPE_DATE:
                 return ['name' => 'date'];
-                break;
             case static::PHINX_TYPE_BLOB:
             case static::PHINX_TYPE_BINARY:
                 return ['name' => 'varbinary'];
-                break;
             case static::PHINX_TYPE_BOOLEAN:
                 return ['name' => 'bit'];
-                break;
             case static::PHINX_TYPE_UUID:
                 return ['name' => 'uniqueidentifier'];
             case static::PHINX_TYPE_FILESTREAM:
@@ -909,7 +887,6 @@ ORDER BY T.[name], I.[index_id];";
                 // SQL Server stores all spatial data using a single data type.
                 // Specific types (point, polygon, etc) are set at insert time.
                 return ['name' => 'geography'];
-                break;
             default:
                 throw new \RuntimeException('The type: "' . $type . '" is not supported.');
         }
@@ -951,7 +928,6 @@ ORDER BY T.[name], I.[index_id];";
             case 'image':
             case 'varbinary':
                 return static::PHINX_TYPE_BINARY;
-                break;
             case 'time':
                 return static::PHINX_TYPE_TIME;
             case 'date':
@@ -1048,7 +1024,7 @@ SQL;
             'tinyint'
         ];
         if (!in_array($sqlType['name'], $noLimits) && ($column->getLimit() || isset($sqlType['limit']))) {
-            $buffer[] = sprintf('(%s)', $column->getLimit() ? $column->getLimit() : $sqlType['limit']);
+            $buffer[] = sprintf('(%s)', $column->getLimit() ?: $sqlType['limit']);
         }
         if ($column->getPrecision() && $column->getScale()) {
             $buffer[] = '(' . $column->getPrecision() . ',' . $column->getScale() . ')';
@@ -1111,9 +1087,7 @@ SQL;
      */
     protected function getForeignKeySqlDefinition(ForeignKey $foreignKey, $tableName)
     {
-        $constraintName = $foreignKey->getConstraint()
-            ? $foreignKey->getConstraint()
-            : $tableName . '_' . implode('_', $foreignKey->getColumns());
+        $constraintName = $foreignKey->getConstraint() ?: $tableName . '_' . implode('_', $foreignKey->getColumns());
         $def = ' CONSTRAINT ' . $this->quoteColumnName($constraintName);
         $def .= ' FOREIGN KEY ("' . implode('", "', $foreignKey->getColumns()) . '")';
         $def .= " REFERENCES {$this->quoteTableName($foreignKey->getReferencedTable()->getName())} (\"" . implode('", "', $foreignKey->getReferencedColumns()) . '")';

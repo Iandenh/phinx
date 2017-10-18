@@ -30,8 +30,8 @@ namespace Phinx\Db\Adapter;
 
 use Phinx\Db\Table;
 use Phinx\Db\Table\Column;
-use Phinx\Db\Table\Index;
 use Phinx\Db\Table\ForeignKey;
+use Phinx\Db\Table\Index;
 
 /**
  * Phinx SQLite Adapter.
@@ -193,24 +193,14 @@ class SQLiteAdapter extends PdoAdapter implements AdapterInterface
         if (isset($options['primary_key'])) {
             $sql = rtrim($sql);
             $sql .= ' PRIMARY KEY (';
-            if (is_string($options['primary_key'])) {       // handle primary_key => 'id'
+            if (is_string($options['primary_key'])) { // handle primary_key => 'id'
                 $sql .= $this->quoteColumnName($options['primary_key']);
             } elseif (is_array($options['primary_key'])) { // handle primary_key => array('tag_id', 'resource_id')
-                // PHP 5.4 will allow access of $this, so we can call quoteColumnName() directly in the anonymous function,
-                // but for now just hard-code the adapter quotes
-                $sql .= implode(
-                    ',',
-                    array_map(
-                        function ($v) {
-                            return '`' . $v . '`';
-                        },
-                        $options['primary_key']
-                    )
-                );
+                $sql .= implode(',', array_map([$this, 'quoteColumnName'], $options['primary_key']));
             }
             $sql .= ')';
         } else {
-            $sql = substr(rtrim($sql), 0, -1);              // no primary keys
+            $sql = substr(rtrim($sql), 0, -1); // no primary keys
         }
 
         // set the foreign keys
@@ -377,7 +367,6 @@ class SQLiteAdapter extends PdoAdapter implements AdapterInterface
      */
     public function changeColumn($tableName, $columnName, Column $newColumn)
     {
-
         // TODO: DRY this up....
         $tmpTableName = 'tmp_' . $tableName;
 
@@ -789,7 +778,7 @@ class SQLiteAdapter extends PdoAdapter implements AdapterInterface
         );
 
         $columns = array_keys($row);
-        $sql .= "(". implode(', ', array_map([$this, 'quoteColumnName'], $columns)) . ")";
+        $sql .= "(" . implode(', ', array_map([$this, 'quoteColumnName'], $columns)) . ")";
         $sql .= " VALUES ";
 
         $sql .= "(" . implode(', ', array_map(function ($value) {
@@ -815,44 +804,31 @@ class SQLiteAdapter extends PdoAdapter implements AdapterInterface
         switch ($type) {
             case static::PHINX_TYPE_STRING:
                 return ['name' => 'varchar', 'limit' => 255];
-                break;
             case static::PHINX_TYPE_CHAR:
                 return ['name' => 'char', 'limit' => 255];
-                break;
             case static::PHINX_TYPE_TEXT:
                 return ['name' => 'text'];
-                break;
             case static::PHINX_TYPE_INTEGER:
                 return ['name' => 'integer'];
-                break;
             case static::PHINX_TYPE_BIG_INTEGER:
                 return ['name' => 'bigint'];
-                break;
             case static::PHINX_TYPE_FLOAT:
                 return ['name' => 'float'];
-                break;
             case static::PHINX_TYPE_DECIMAL:
                 return ['name' => 'decimal'];
-                break;
             case static::PHINX_TYPE_DATETIME:
                 return ['name' => 'datetime'];
-                break;
             case static::PHINX_TYPE_TIMESTAMP:
                 return ['name' => 'datetime'];
-                break;
             case static::PHINX_TYPE_TIME:
                 return ['name' => 'time'];
-                break;
             case static::PHINX_TYPE_DATE:
                 return ['name' => 'date'];
-                break;
             case static::PHINX_TYPE_BLOB:
             case static::PHINX_TYPE_BINARY:
                 return ['name' => 'blob'];
-                break;
             case static::PHINX_TYPE_BOOLEAN:
                 return ['name' => 'boolean'];
-                break;
             case static::PHINX_TYPE_UUID:
                 return ['name' => 'char', 'limit' => 36];
             case static::PHINX_TYPE_ENUM:
@@ -863,11 +839,8 @@ class SQLiteAdapter extends PdoAdapter implements AdapterInterface
             case static::PHINX_TYPE_GEOMETRY:
             case static::PHINX_TYPE_POLYGON:
                 return ['name' => 'text'];
-
-                return;
             case static::PHINX_TYPE_LINESTRING:
                 return ['name' => 'varchar', 'limit' => 255];
-                break;
             case static::PHINX_TYPE_POINT:
                 return ['name' => 'float'];
             default:
@@ -890,7 +863,7 @@ class SQLiteAdapter extends PdoAdapter implements AdapterInterface
             $precision = null;
             $type = $matches[1];
             if (count($matches) > 2) {
-                $limit = $matches[3] ? $matches[3] : null;
+                $limit = $matches[3] ?: null;
             }
             if (count($matches) > 4) {
                 $precision = $matches[5];
@@ -1003,7 +976,7 @@ class SQLiteAdapter extends PdoAdapter implements AdapterInterface
         }
         $limitable = in_array(strtoupper($sqlType['name']), $this->definitionsWithLimits);
         if (($column->getLimit() || isset($sqlType['limit'])) && $limitable) {
-            $def .= '(' . ($column->getLimit() ? $column->getLimit() : $sqlType['limit']) . ')';
+            $def .= '(' . ($column->getLimit() ?: $sqlType['limit']) . ')';
         }
         if (($values = $column->getValues()) && is_array($values)) {
             $def .= " CHECK({$column->getName()} IN ('" . implode("', '", $values) . "'))";
