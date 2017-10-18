@@ -462,14 +462,16 @@ class SqlServerAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($table->hasIndex('email'));
         $this->adapter->dropIndex($table->getName(), 'email');
         $this->assertFalse($table->hasIndex('email'));
+    }
 
-        return;
+    public function testDropIndexMultiColumnIndex()
+    {
         // multiple column index
         $table2 = new \Phinx\Db\Table('table2', [], $this->adapter);
         $table2->addColumn('fname', 'string')
-               ->addColumn('lname', 'string')
-               ->addIndex(['fname', 'lname'])
-               ->save();
+            ->addColumn('lname', 'string')
+            ->addIndex(['fname', 'lname'])
+            ->save();
         $this->assertTrue($table2->hasIndex(['fname', 'lname']));
         $this->adapter->dropIndex($table2->getName(), ['fname', 'lname']);
         $this->assertFalse($table2->hasIndex(['fname', 'lname']));
@@ -477,8 +479,8 @@ class SqlServerAdapterTest extends \PHPUnit_Framework_TestCase
         // index with name specified, but dropping it by column name
         $table3 = new \Phinx\Db\Table('table3', [], $this->adapter);
         $table3->addColumn('email', 'string')
-               ->addIndex('email', ['name' => 'someindexname'])
-               ->save();
+            ->addIndex('email', ['name' => 'someindexname'])
+            ->save();
         $this->assertTrue($table3->hasIndex('email'));
         $this->adapter->dropIndex($table3->getName(), 'email');
         $this->assertFalse($table3->hasIndex('email'));
@@ -486,9 +488,9 @@ class SqlServerAdapterTest extends \PHPUnit_Framework_TestCase
         // multiple column index with name specified
         $table4 = new \Phinx\Db\Table('table4', [], $this->adapter);
         $table4->addColumn('fname', 'string')
-               ->addColumn('lname', 'string')
-               ->addIndex(['fname', 'lname'], ['name' => 'multiname'])
-               ->save();
+            ->addColumn('lname', 'string')
+            ->addIndex(['fname', 'lname'], ['name' => 'multiname'])
+            ->save();
         $this->assertTrue($table4->hasIndex(['fname', 'lname']));
         $this->adapter->dropIndex($table4->getName(), ['fname', 'lname']);
         $this->assertFalse($table4->hasIndex(['fname', 'lname']));
