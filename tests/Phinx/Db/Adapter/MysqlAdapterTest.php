@@ -2,6 +2,7 @@
 
 namespace Test\Phinx\Db\Adapter;
 
+use Phinx\Db\Adapter\AdapterInterface;
 use Phinx\Db\Adapter\MysqlAdapter;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputDefinition;
@@ -9,7 +10,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\StreamOutput;
-use Phinx\Db\Adapter\AdapterInterface;
 
 class MysqlAdapterTest extends \PHPUnit_Framework_TestCase
 {
@@ -90,9 +90,9 @@ class MysqlAdapterTest extends \PHPUnit_Framework_TestCase
         }
 
         $options = [
-            'name'        => TESTS_PHINX_DB_ADAPTER_MYSQL_DATABASE,
-            'user'        => TESTS_PHINX_DB_ADAPTER_MYSQL_USERNAME,
-            'pass'        => TESTS_PHINX_DB_ADAPTER_MYSQL_PASSWORD,
+            'name' => TESTS_PHINX_DB_ADAPTER_MYSQL_DATABASE,
+            'user' => TESTS_PHINX_DB_ADAPTER_MYSQL_USERNAME,
+            'pass' => TESTS_PHINX_DB_ADAPTER_MYSQL_PASSWORD,
             'unix_socket' => TESTS_PHINX_DB_ADAPTER_MYSQL_UNIX_SOCKET,
         ];
 
@@ -165,7 +165,6 @@ class MysqlAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testCreateTableWithForeignKeys()
     {
-
         $tag_table = new \Phinx\Db\Table('ntable_tag', [], $this->adapter);
         $tag_table->addColumn('realname', 'string')
                   ->save();
@@ -228,8 +227,8 @@ class MysqlAdapterTest extends \PHPUnit_Framework_TestCase
     public function testCreateTableWithMultiplePrimaryKeys()
     {
         $options = [
-            'id'            => false,
-            'primary_key'   => ['user_id', 'tag_id']
+            'id' => false,
+            'primary_key' => ['user_id', 'tag_id']
         ];
         $table = new \Phinx\Db\Table('table1', $options, $this->adapter);
         $table->addColumn('user_id', 'integer')
